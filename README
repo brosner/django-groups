@@ -1,0 +1,6 @@
+django-groups is a Django app that allows you to easily create "groups" of
+people around arbitrary objects. For example, you might want a group of people
+to collobrate on a wiki or tasks.
+
+This app is extracted from the work that went into Pinax 0.7. It was written
+to be extracted from the start.
