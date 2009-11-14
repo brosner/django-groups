@@ -38,10 +38,22 @@ class ContentBridge(object):
             
             if isinstance(url, RegexURLPattern):
                 regex = url_prefix + url.regex.pattern.lstrip("^")
-                callback = url._callback or url._callback_str
-                name = prefix + "_" + (url.name or "")
+                
+                if url._callback:
+                    callback = url._callback
+                else:
+                    callback = url._callback_str
+                
+                if url.name:
+                    name = url.name
+                else:
+                    # @@@ this seems sketchy
+                    name = ""
+                name = "%s_%s" % (prefix, name)
+                
                 extra_kwargs.update(kwargs)
                 extra_kwargs.update(url.default_args)
+                
                 final_urls.append(urlpattern(regex, callback, extra_kwargs, name))
             else:
                 # i don't see this case happening much at all. this case will be
