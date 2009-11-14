@@ -10,6 +10,10 @@ setup(
     author = "Brian Rosner",
     author_email = "brosner@gmail.com",
     license = "MIT",
+    packages = [
+        "groups",
+        "groups.templatetags",
+    ],
     classifiers = [
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
