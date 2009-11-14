@@ -39,6 +39,11 @@ class Group(models.Model):
     created = models.DateTimeField(_("created"), default=datetime.datetime.now)
     description = models.TextField(_("description"))
     
+    # nested groups
+    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    group = generic.GenericForeignKey("content_type", "object_id")
+    
     def __unicode__(self):
         return self.name
     
