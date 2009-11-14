@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 class ContentBridge(object):
+    
     def __init__(self, group_model, content_app_name):
         self.group_model = group_model
         self.content_app_name = content_app_name
@@ -26,9 +27,9 @@ class ContentBridge(object):
         __import__(module_name)
         module = sys.modules[module_name]
         urls = module.urlpatterns
-
+        
         final_urls = []
-
+        
         for url in urls:
             extra_kwargs = {"bridge": self}
             
@@ -47,13 +48,13 @@ class ContentBridge(object):
                 # reading this because something is broken then give it a shot.
                 # then report back :-)
                 raise Exception("ContentBridge.include_urls does not support a nested include.")
-
+                
                 # regex = url_prefix + url.regex.pattern.lstrip("^")
                 # urlconf_name = url.urlconf_name
                 # extra_kwargs.update(kwargs)
                 # extra_kwargs.update(url.default_kwargs)
                 # final_urls.append(urlpattern(regex, [urlconf_name], extra_kwargs))
-
+        
         return patterns("", *final_urls)
     
     def reverse(self, view_name, group, kwargs=None):
@@ -69,10 +70,11 @@ class ContentBridge(object):
         return dreverse("%s_%s" % (prefix, view_name), kwargs=final_kwargs)
     
     def render(self, template_name, context, context_instance=None):
+        # @@@ this method is practically useless -- consider removing it.
         ctype = ContentType.objects.get_for_model(self.group_model)
         return render_to_response([
-            '%s/%s/%s' % (ctype.app_label, self.content_app_name, template_name),
-            '%s/%s' % (self.content_app_name, template_name),
+            "%s/%s/%s" % (ctype.app_label, self.content_app_name, template_name),
+            "%s/%s" % (self.content_app_name, template_name),
         ], context, context_instance=context_instance)
     
     def group_base_template(self, template_name="content_base.html"):

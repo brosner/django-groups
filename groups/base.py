@@ -5,10 +5,10 @@ from django.db import models
 from django.db.models.options import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes import generic
 
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 
 
 def _get_queryset(klass):
@@ -33,17 +33,17 @@ class Group(models.Model):
     a group is a group of users with a common interest
     """
     
-    slug = models.SlugField(_('slug'), unique=True)
-    name = models.CharField(_('name'), max_length=80, unique=True)
-    creator = models.ForeignKey(User, verbose_name=_('creator'), related_name="%(class)s_created")
-    created = models.DateTimeField(_('created'), default=datetime.datetime.now)
-    description = models.TextField(_('description'))
-
+    slug = models.SlugField(_("slug"), unique=True)
+    name = models.CharField(_("name"), max_length=80, unique=True)
+    creator = models.ForeignKey(User, verbose_name=_("creator"), related_name="%(class)s_created")
+    created = models.DateTimeField(_("created"), default=datetime.datetime.now)
+    description = models.TextField(_("description"))
+    
     def __unicode__(self):
         return self.name
     
     def get_url_kwargs(self):
-        return {'group_slug': self.slug}
+        return {"group_slug": self.slug}
     
     def member_queryset(self):
         if not hasattr(self, "_members_field"):
