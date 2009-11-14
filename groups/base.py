@@ -48,7 +48,11 @@ class Group(models.Model):
         return self.name
     
     def get_url_kwargs(self):
-        return {"%s_slug" % self._meta.object_name.lower(): self.slug}
+        kwargs = {}
+        if self.group:
+            kwargs.update(self.group.get_url_kwargs())
+        kwargs.update({"%s_slug" % self._meta.object_name.lower(): self.slug})
+        return kwargs
     
     def member_queryset(self):
         if not hasattr(self, "_members_field"):

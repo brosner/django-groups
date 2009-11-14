@@ -76,17 +76,25 @@ class ContentBridge(object):
         
         return patterns("", *urls)
     
+    @property
+    def _url_name_prefix(self):
+        parent_prefix = ""
+        
+        if self.parent_bridge is not None:
+            parent_prefix = "%s_" % self.parent_bridge._url_name_prefix
+        
+        return "%s%s" % (parent_prefix, self.content_app_name)
+    
     def reverse(self, view_name, group, kwargs=None):
         if kwargs is None:
             kwargs = {}
         
-        prefix = self.content_app_name
         final_kwargs = {}
         
         final_kwargs.update(group.get_url_kwargs())
         final_kwargs.update(kwargs)
         
-        return dreverse("%s_%s" % (prefix, view_name), kwargs=final_kwargs)
+        return dreverse("%s_%s" % (self._url_name_prefix, view_name), kwargs=final_kwargs)
     
     def render(self, template_name, context, context_instance=None):
         # @@@ this method is practically useless -- consider removing it.
