@@ -29,11 +29,10 @@ class ContentBridge(object):
         
         __import__(module_name)
         module = sys.modules[module_name]
-        urls = module.urlpatterns
         
-        final_urls = []
+        urls = []
         
-        for url in urls:
+        for url in module.urlpatterns:
             extra_kwargs = {"bridge": self}
             
             if isinstance(url, RegexURLPattern):
@@ -54,7 +53,7 @@ class ContentBridge(object):
                 extra_kwargs.update(kwargs)
                 extra_kwargs.update(url.default_args)
                 
-                final_urls.append(urlpattern(regex, callback, extra_kwargs, name))
+                urls.append(urlpattern(regex, callback, extra_kwargs, name))
             else:
                 # i don't see this case happening much at all. this case will be
                 # executed likely if url is a RegexURLResolver. nesting an include
@@ -70,7 +69,7 @@ class ContentBridge(object):
                 # extra_kwargs.update(url.default_kwargs)
                 # final_urls.append(urlpattern(regex, [urlconf_name], extra_kwargs))
         
-        return patterns("", *final_urls)
+        return patterns("", *urls)
     
     def reverse(self, view_name, group, kwargs=None):
         if kwargs is None:
