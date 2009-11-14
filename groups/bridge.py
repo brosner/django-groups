@@ -117,10 +117,18 @@ class ContentBridge(object):
                 "content_type": ContentType.objects.get_for_model(parent_group),
                 "object_id": parent_group.pk,
             })
+        else:
+            parent_group = None
         
         lookup_params.update({
             "slug": kwargs.get("%s_slug" % self.group_model._meta.object_name.lower()),
         })
         
-        return self.group_model._default_manager.get(**lookup_params)
+        group = self.group_model._default_manager.get(**lookup_params)
+        
+        if parent_group:
+            # cache parent_group on GFK to prevent database hits later on
+            group.group = parent_group
+        
+        return group
         
