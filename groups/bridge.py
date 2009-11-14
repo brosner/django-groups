@@ -9,9 +9,12 @@ from django.contrib.contenttypes.models import ContentType
 
 class ContentBridge(object):
     
-    def __init__(self, group_model, content_app_name):
+    def __init__(self, group_model, content_app_name=None):
         self.group_model = group_model
-        self.content_app_name = content_app_name
+        if content_app_name is None:
+            self.content_app_name = group_model._meta.app_label
+        else:
+            self.content_app_name = content_app_name
         
         # attach the bridge to the model itself. we need to access it when
         # using groupurl to get the correct prefix for URLs for the given
