@@ -9,14 +9,16 @@ from django.contrib.contenttypes.models import ContentType
 
 class ContentBridge(object):
     
-    def __init__(self, group_model, content_app_name=None):
+    def __init__(self, group_model, content_app_name=None, legacy=False):
         self.parent_bridge = None
         self.group_model = group_model
         
         if content_app_name is None:
             self.content_app_name = group_model._meta.app_label
+            self.legacy_mode = legacy
         else:
             self.content_app_name = content_app_name
+            self.legacy_mode = True
         
         # attach the bridge to the model itself. we need to access it when
         # using groupurl to get the correct prefix for URLs for the given
@@ -107,7 +109,7 @@ class ContentBridge(object):
     def group_base_template(self, template_name="content_base.html"):
         return "%s/%s" % (self.content_app_name, template_name)
     
-    def get_group(self, **kwargs):
+    def get_group(self, *args, **kwargs):
         
         lookup_params = {}
         
@@ -120,8 +122,13 @@ class ContentBridge(object):
         else:
             parent_group = None
         
+        if self.legacy_mode:
+            slug = args[0]
+        else:
+            slug = kwargs.get("%s_slug" % self.group_model._meta.object_name.lower())
+        
         lookup_params.update({
-            "slug": kwargs.get("%s_slug" % self.group_model._meta.object_name.lower()),
+            "slug": slug,
         })
         
         group = self.group_model._default_manager.get(**lookup_params)
