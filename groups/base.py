@@ -39,11 +39,20 @@ class Group(models.Model):
     created = models.DateTimeField(_("created"), default=datetime.datetime.now)
     description = models.TextField(_("description"))
     
+    # nested groups
+    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    group = generic.GenericForeignKey("content_type", "object_id")
+    
     def __unicode__(self):
         return self.name
     
     def get_url_kwargs(self):
-        return {"group_slug": self.slug}
+        kwargs = {}
+        if self.group:
+            kwargs.update(self.group.get_url_kwargs())
+        kwargs.update({"%s_slug" % self._meta.object_name.lower(): self.slug})
+        return kwargs
     
     def member_queryset(self):
         if not hasattr(self, "_members_field"):

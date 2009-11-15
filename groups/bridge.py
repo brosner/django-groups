@@ -9,12 +9,16 @@ from django.contrib.contenttypes.models import ContentType
 
 class ContentBridge(object):
     
-    def __init__(self, group_model, content_app_name=None):
+    def __init__(self, group_model, content_app_name=None, legacy=False):
+        self.parent_bridge = None
         self.group_model = group_model
+        
         if content_app_name is None:
             self.content_app_name = group_model._meta.app_label
+            self.legacy_mode = legacy
         else:
             self.content_app_name = content_app_name
+            self.legacy_mode = True
         
         # attach the bridge to the model itself. we need to access it when
         # using groupurl to get the correct prefix for URLs for the given
@@ -29,11 +33,13 @@ class ContentBridge(object):
         
         __import__(module_name)
         module = sys.modules[module_name]
-        urls = module.urlpatterns
         
-        final_urls = []
+        if hasattr(module, "bridge"):
+            module.bridge.parent_bridge = self
         
-        for url in urls:
+        urls = []
+        
+        for url in module.urlpatterns:
             extra_kwargs = {"bridge": self}
             
             if isinstance(url, RegexURLPattern):
@@ -54,7 +60,7 @@ class ContentBridge(object):
                 extra_kwargs.update(kwargs)
                 extra_kwargs.update(url.default_args)
                 
-                final_urls.append(urlpattern(regex, callback, extra_kwargs, name))
+                urls.append(urlpattern(regex, callback, extra_kwargs, name))
             else:
                 # i don't see this case happening much at all. this case will be
                 # executed likely if url is a RegexURLResolver. nesting an include
@@ -70,19 +76,27 @@ class ContentBridge(object):
                 # extra_kwargs.update(url.default_kwargs)
                 # final_urls.append(urlpattern(regex, [urlconf_name], extra_kwargs))
         
-        return patterns("", *final_urls)
+        return patterns("", *urls)
+    
+    @property
+    def _url_name_prefix(self):
+        parent_prefix = ""
+        
+        if self.parent_bridge is not None:
+            parent_prefix = "%s_" % self.parent_bridge._url_name_prefix
+        
+        return "%s%s" % (parent_prefix, self.content_app_name)
     
     def reverse(self, view_name, group, kwargs=None):
         if kwargs is None:
             kwargs = {}
         
-        prefix = self.content_app_name
         final_kwargs = {}
         
         final_kwargs.update(group.get_url_kwargs())
         final_kwargs.update(kwargs)
         
-        return dreverse("%s_%s" % (prefix, view_name), kwargs=final_kwargs)
+        return dreverse("%s_%s" % (self._url_name_prefix, view_name), kwargs=final_kwargs)
     
     def render(self, template_name, context, context_instance=None):
         # @@@ this method is practically useless -- consider removing it.
@@ -95,6 +109,33 @@ class ContentBridge(object):
     def group_base_template(self, template_name="content_base.html"):
         return "%s/%s" % (self.content_app_name, template_name)
     
-    def get_group(self, slug):
-        return self.group_model._default_manager.get(slug=slug)
+    def get_group(self, *args, **kwargs):
+        
+        lookup_params = {}
+        
+        if self.parent_bridge is not None:
+            parent_group = self.parent_bridge.get_group(**kwargs)
+            lookup_params.update({
+                "content_type": ContentType.objects.get_for_model(parent_group),
+                "object_id": parent_group.pk,
+            })
+        else:
+            parent_group = None
+        
+        if self.legacy_mode:
+            slug = args[0]
+        else:
+            slug = kwargs.get("%s_slug" % self.group_model._meta.object_name.lower())
+        
+        lookup_params.update({
+            "slug": slug,
+        })
+        
+        group = self.group_model._default_manager.get(**lookup_params)
+        
+        if parent_group:
+            # cache parent_group on GFK to prevent database hits later on
+            group.group = parent_group
+        
+        return group
         
