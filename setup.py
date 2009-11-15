@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name = "django-groups",
-    version = "0.0",
+    version = "0.1_1dev",
     url = "http://pinaxproject.com/docs/dev/groups.html",
     description = "Django group support (extracted from Pinax)",
     long_description = open("README", "rb").read(),
