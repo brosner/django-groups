@@ -123,6 +123,6 @@ class GroupAware(models.Model):
     A mixin abstract base model to use on models you want to make group-aware.
     """
     
-    group_content_type = models.ForeignKey(ContentType, blank=True)
-    group_object_id = models.PositiveIntegerField(blank=True)
+    group_content_type = models.ForeignKey(ContentType)
+    group_object_id = models.PositiveIntegerField()
     group = generic.GenericForeignKey("group_content_type", "group_object_id")
