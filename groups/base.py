@@ -126,3 +126,6 @@ class GroupAware(models.Model):
     group_content_type = models.ForeignKey(ContentType)
     group_object_id = models.PositiveIntegerField()
     group = generic.GenericForeignKey("group_content_type", "group_object_id")
+    
+    class Meta:
+        abtract = True
