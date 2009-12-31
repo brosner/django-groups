@@ -116,3 +116,13 @@ class GroupScopedId(models.Model):
     class Meta:
         abstract = True
         unique_together = (("content_type", "object_id", "scoped_number"),)
+
+
+class GroupAware(models.Model):
+    """
+    A mixin abstract base model to use on models you want to make group-aware.
+    """
+    
+    group_content_type = models.ForeignKey(ContentType, blank=True)
+    group_object_id = models.PositiveIntegerField(blank=True)
+    group = generic.GenericForeignKey("group_content_type", "group_object_id")
