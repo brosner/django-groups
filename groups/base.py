@@ -38,7 +38,7 @@ class GroupAware(models.Model):
     group = generic.GenericForeignKey("group_content_type", "group_object_id")
     
     class Meta:
-        abtract = True
+        abstract = True
 
 
 class Group(models.Model):
