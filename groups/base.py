@@ -11,6 +11,7 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 
 
+
 def _get_queryset(klass):
     """
     Returns a QuerySet from a Model, Manager, or QuerySet. Created to make
@@ -41,31 +42,12 @@ class GroupAware(models.Model):
         abstract = True
 
 
-class Group(models.Model):
-    """
-    a group is a group of users with a common interest
-    """
+class GroupBase(models.Model):
     
-    slug = models.SlugField(_("slug"), unique=True)
-    name = models.CharField(_("name"), max_length=80, unique=True)
-    creator = models.ForeignKey(User, verbose_name=_("creator"), related_name="%(class)s_created")
-    created = models.DateTimeField(_("created"), default=datetime.datetime.now)
-    description = models.TextField(_("description"))
+    slug_attr = "slug"
     
-    # nested groups
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    group = generic.GenericForeignKey("content_type", "object_id")
-    
-    def __unicode__(self):
-        return self.name
-    
-    def get_url_kwargs(self):
-        kwargs = {}
-        if self.group:
-            kwargs.update(self.group.get_url_kwargs())
-        kwargs.update({"%s_slug" % self._meta.object_name.lower(): self.slug})
-        return kwargs
+    class Meta(object):
+        abstract = True
     
     def member_queryset(self):
         if not hasattr(self, "_members_field"):
@@ -110,6 +92,37 @@ class Group(models.Model):
         if commit:
             instance.save()
         return instance
+    
+    def get_url_kwargs(self):
+        kwargs = {}
+        if self.group:
+            kwargs.update(self.group.get_url_kwargs())
+        slug = getattr(self, self.slug_attr)
+        kwargs.update({"%s_slug" % self._meta.object_name.lower(): slug})
+        return kwargs
+
+
+class NestedGroupBase(GroupBase):
+    
+    # nested groups
+    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    group = generic.GenericForeignKey("content_type", "object_id")
+
+
+class Group(NestedGroupBase):
+    """
+    a group is a group of users with a common interest
+    """
+    
+    slug = models.SlugField(_("slug"), unique=True)
+    name = models.CharField(_("name"), max_length=80, unique=True)
+    creator = models.ForeignKey(User, verbose_name=_("creator"), related_name="%(class)s_created")
+    created = models.DateTimeField(_("created"), default=datetime.datetime.now)
+    description = models.TextField(_("description"))
+    
+    def __unicode__(self):
+        return self.name
     
     class Meta(object):
         abstract = True
