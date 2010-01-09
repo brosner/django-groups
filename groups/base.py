@@ -102,15 +102,7 @@ class GroupBase(models.Model):
         return kwargs
 
 
-class NestedGroupBase(GroupBase):
-    
-    # nested groups
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    group = generic.GenericForeignKey("content_type", "object_id")
-
-
-class Group(NestedGroupBase):
+class Group(GroupBase, GroupAware):
     """
     a group is a group of users with a common interest
     """
