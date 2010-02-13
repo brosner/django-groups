@@ -70,13 +70,13 @@ class GroupBase(models.Model):
     def user_is_member(self, user):
         return user in self.member_queryset()
     
-    def _group_gfk_field(self):
-        return [f for f in self._meta.virtual_fields if f.name == "group"][0]
+    def _group_gfk_field(self, model):
+        return [f for f in model._meta.virtual_fields if f.name == "group"][0]
     
     def content_objects(self, model, join=None):
         queryset = _get_queryset(model)
         content_type = ContentType.objects.get_for_model(self)
-        group_gfk = self._group_gfk_field()
+        group_gfk = self._group_gfk_field(model)
         if join:
             lookup_kwargs = {
                 "%s__%s" % (join, group_gfk.fk_field): self.id,
@@ -91,7 +91,7 @@ class GroupBase(models.Model):
         return content_objects
     
     def associate(self, instance, commit=True):
-        group_gfk = self._group_gfk_field()
+        group_gfk = self._group_gfk_field(instance)
         setattr(instance, group_gfk.fk_field, self.id)
         setattr(instance, group_gfk.ct_field, ContentType.objects.get_for_model(self))
         if commit:
