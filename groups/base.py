@@ -82,8 +82,8 @@ class GroupBase(models.Model):
         }
         return params
     
-    def content_objects(self, model, join=None):
-        queryset = _get_queryset(model)
+    def content_objects(self, queryable, join=None):
+        queryset = _get_queryset(queryable)
         content_type = ContentType.objects.get_for_model(self)
         group_gfk = self._group_gfk_field(queryset.model)
         if join:
