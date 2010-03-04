@@ -73,6 +73,15 @@ class GroupBase(models.Model):
     def _group_gfk_field(self, model):
         return [f for f in model._meta.virtual_fields if f.name == "group"][0]
     
+    def lookup_params(self, model):
+        content_type = ContentType.objects.get_for_model(self)
+        group_gfk = self._group_gfk_field(model)
+        params = {
+            group_gfk.fk_field: self.id,
+            group_gfk.ct_field: content_type,
+        }
+        return params
+    
     def content_objects(self, model, join=None):
         queryset = _get_queryset(model)
         content_type = ContentType.objects.get_for_model(self)

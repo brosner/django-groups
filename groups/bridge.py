@@ -9,16 +9,14 @@ from django.contrib.contenttypes.models import ContentType
 
 class ContentBridge(object):
     
-    def __init__(self, group_model, content_app_name=None, legacy=False):
+    def __init__(self, group_model, content_app_name=None):
         self.parent_bridge = None
         self.group_model = group_model
         
         if content_app_name is None:
             self.content_app_name = group_model._meta.app_label
-            self.legacy_mode = legacy
         else:
             self.content_app_name = content_app_name
-            self.legacy_mode = True
         
         # attach the bridge to the model itself. we need to access it when
         # using groupurl to get the correct prefix for URLs for the given
@@ -109,23 +107,17 @@ class ContentBridge(object):
     def group_base_template(self, template_name="content_base.html"):
         return "%s/%s" % (self.content_app_name, template_name)
     
-    def get_group(self, *args, **kwargs):
+    def get_group(self, kwargs):
         
         lookup_params = {}
         
         if self.parent_bridge is not None:
-            parent_group = self.parent_bridge.get_group(**kwargs)
-            lookup_params.update({
-                "content_type": ContentType.objects.get_for_model(parent_group),
-                "object_id": parent_group.pk,
-            })
+            parent_group = self.parent_bridge.get_group(kwargs)
+            lookup_params.update(parent_group.lookup_params(self.group_model))
         else:
             parent_group = None
         
-        if self.legacy_mode:
-            slug = args[0]
-        else:
-            slug = kwargs.get("%s_slug" % self.group_model._meta.object_name.lower())
+        slug = kwargs.pop("%s_slug" % self.group_model._meta.object_name.lower())
         
         lookup_params.update({
             "slug": slug,
