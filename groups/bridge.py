@@ -9,9 +9,10 @@ from django.contrib.contenttypes.models import ContentType
 
 class ContentBridge(object):
     
-    def __init__(self, group_model, content_app_name=None):
+    def __init__(self, group_model, content_app_name=None, urlconf_aware=True):
         self.parent_bridge = None
         self.group_model = group_model
+        self.urlconf_aware = urlconf_aware
         
         if content_app_name is None:
             self.content_app_name = group_model._meta.app_label
@@ -81,7 +82,10 @@ class ContentBridge(object):
         parent_prefix = ""
         
         if self.parent_bridge is not None:
-            parent_prefix = "%s_" % self.parent_bridge._url_name_prefix
+            if self.parent_bridge.urlconf_aware:
+                parent_prefix = "%s_" % self.parent_bridge._url_name_prefix
+            else:
+                parent_prefix = ""
         
         return "%s%s" % (parent_prefix, self.content_app_name)
     
