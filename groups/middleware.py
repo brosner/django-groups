@@ -21,7 +21,7 @@ class GroupMiddleware(object):
             group = GroupDummy()
         
         # attach a request helper
-        # group.request = GroupRequestHelper(request, group)
+        group.request = GroupRequestHelper(request, group)
         
         request.group = group
         request.bridge = bridge
