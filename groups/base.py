@@ -85,7 +85,7 @@ class GroupBase(models.Model):
     def content_objects(self, model, join=None):
         queryset = _get_queryset(model)
         content_type = ContentType.objects.get_for_model(self)
-        group_gfk = self._group_gfk_field(model)
+        group_gfk = self._group_gfk_field(queryset.model)
         if join:
             lookup_kwargs = {
                 "%s__%s" % (join, group_gfk.fk_field): self.id,
