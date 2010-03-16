@@ -45,14 +45,22 @@ class GroupURLNode(template.Node):
 
 
 class ContentObjectsNode(template.Node):
-    def __init__(self, group_var, model_name_var, context_var):
+    def __init__(self, group_var, model_name_var, gfk_field_var, context_var):
         self.group_var = template.Variable(group_var)
         self.model_name_var = template.Variable(model_name_var)
+        if gfk_field_var is not None:
+            self.gfk_field_var = template.Variable(gfk_field_var)
+        else:
+            self.gfk_field_var = None
         self.context_var = context_var
     
     def render(self, context):
         group = self.group_var.resolve(context)
         model_name = self.model_name_var.resolve(context)
+        if self.gfk_field_var is not None:
+            gfk_field = self.gfk_field_var.resolve(context)
+        else:
+            gfk_field = None
         
         if isinstance(model_name, QuerySet):
             model = model_name
@@ -60,7 +68,7 @@ class ContentObjectsNode(template.Node):
             app_name, model_name = model_name.split(".")
             model = get_model(app_name, model_name)
         
-        context[self.context_var] = group.content_objects(model)
+        context[self.context_var] = group.content_objects(model, gfk_field=gfk_field)
         return ""
 
 
@@ -123,12 +131,23 @@ def groupurl(parser, token):
 @register.tag
 def content_objects(parser, token):
     """
+    Basic usage::
+    
         {% content_objects group "tasks.Task" as tasks %}
+    
+    or if you need to specify a custom generic foreign key field (default is
+    group)::
+    
+        {% content_objects group "tasks.Task" "content_object" as tasks %}
     """
     bits = token.split_contents()
-    if len(bits) != 5:
-        raise template.TemplateSyntaxError("'%s' requires five arguments." % bits[0])
-    return ContentObjectsNode(bits[1], bits[2], bits[4])
+    if len(bits) not in [5, 6]:
+        raise template.TemplateSyntaxError("'%s' requires five or six arguments." % bits[0])
+    else:
+        if len(bits) == 5:
+            return ContentObjectsNode(bits[1], bits[2], None, bits[4])
+        else:
+            return ContentObjectsNode(bits[1], bits[2], bits[3], bits[5])
 
 
 @register.tag

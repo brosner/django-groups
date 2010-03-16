@@ -70,8 +70,10 @@ class GroupBase(models.Model):
     def user_is_member(self, user):
         return user in self.member_queryset()
     
-    def _group_gfk_field(self, model):
-        return [f for f in model._meta.virtual_fields if f.name == "group"][0]
+    def _group_gfk_field(self, model, field=None):
+        if field is None:
+            field = "group"
+        return [f for f in model._meta.virtual_fields if f.name == field][0]
     
     def lookup_params(self, model):
         content_type = ContentType.objects.get_for_model(self)
@@ -82,10 +84,10 @@ class GroupBase(models.Model):
         }
         return params
     
-    def content_objects(self, queryable, join=None):
+    def content_objects(self, queryable, join=None, gfk_field=None):
         queryset = _get_queryset(queryable)
         content_type = ContentType.objects.get_for_model(self)
-        group_gfk = self._group_gfk_field(queryset.model)
+        group_gfk = self._group_gfk_field(queryset.model, field=gfk_field)
         if join:
             lookup_kwargs = {
                 "%s__%s" % (join, group_gfk.fk_field): self.id,
