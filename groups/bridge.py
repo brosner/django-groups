@@ -79,15 +79,13 @@ class ContentBridge(object):
     
     @property
     def _url_name_prefix(self):
-        parent_prefix = ""
-        
-        if self.parent_bridge is not None:
-            if self.parent_bridge.urlconf_aware:
-                parent_prefix = "%s_" % self.parent_bridge._url_name_prefix
-            else:
-                parent_prefix = ""
-        
-        return "%s%s" % (parent_prefix, self.content_app_name)
+        if self.urlconf_aware:
+            parent_prefix = ""
+            if self.parent_bridge is not None:
+                parent_prefix = self.parent_bridge._url_name_prefix
+            return "%s%s_" % (parent_prefix, self.content_app_name)
+        else:
+            return ""
     
     def reverse(self, view_name, group, kwargs=None):
         if kwargs is None:
@@ -98,7 +96,7 @@ class ContentBridge(object):
         final_kwargs.update(group.get_url_kwargs())
         final_kwargs.update(kwargs)
         
-        return dreverse("%s_%s" % (self._url_name_prefix, view_name), kwargs=final_kwargs)
+        return dreverse("%s%s" % (self._url_name_prefix, view_name), kwargs=final_kwargs)
     
     def render(self, template_name, context, context_instance=None):
         # @@@ this method is practically useless -- consider removing it.
