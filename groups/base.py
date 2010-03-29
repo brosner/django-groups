@@ -4,6 +4,7 @@ import warnings
 from django.db import models
 from django.db.models.options import FieldDoesNotExist
 from django.db.models.query import QuerySet
+from django.db.models.sql.constants import LOOKUP_SEP
 from django.utils.translation import ugettext_lazy as _
 
 from django.contrib.auth.models import User
@@ -70,10 +71,25 @@ class GroupBase(models.Model):
     def user_is_member(self, user):
         return user in self.member_queryset()
     
-    def _group_gfk_field(self, model, field=None):
-        if field is None:
-            field = "group"
-        return [f for f in model._meta.virtual_fields if f.name == field][0]
+    def _group_gfk_field(self, model, join=None, field_name=None):
+        opts = model._meta
+        if field_name is None:
+            field_name = "group"
+        if join is not None:
+            # see if we can get the model where the field actually lives
+            parts = join.split(LOOKUP_SEP)
+            for name in parts:
+                f, model, direct, m2m = opts.get_field_by_name(name)
+                # not handling the model is not None case (proxied models I think)
+                if direct:
+                    if m2m or f.rel:
+                        opts = f.rel.to._meta
+                    else:
+                        break
+                else:
+                    opts = f.opts
+        field = [f for f in opts.virtual_fields if f.name == field_name][0]
+        return field
     
     def lookup_params(self, model):
         content_type = ContentType.objects.get_for_model(self)
@@ -87,7 +103,7 @@ class GroupBase(models.Model):
     def content_objects(self, queryable, join=None, gfk_field=None):
         queryset = _get_queryset(queryable)
         content_type = ContentType.objects.get_for_model(self)
-        group_gfk = self._group_gfk_field(queryset.model, field=gfk_field)
+        group_gfk = self._group_gfk_field(queryset.model, join=join, field_name=gfk_field)
         if join:
             lookup_kwargs = {
                 "%s__%s" % (join, group_gfk.fk_field): self.id,
@@ -102,7 +118,7 @@ class GroupBase(models.Model):
         return content_objects
     
     def associate(self, instance, commit=True, gfk_field=None):
-        group_gfk = self._group_gfk_field(instance, field=gfk_field)
+        group_gfk = self._group_gfk_field(instance, field_name=gfk_field)
         setattr(instance, group_gfk.fk_field, self.id)
         setattr(instance, group_gfk.ct_field, ContentType.objects.get_for_model(self))
         if commit:
