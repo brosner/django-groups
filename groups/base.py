@@ -101,8 +101,8 @@ class GroupBase(models.Model):
         content_objects = queryset.filter(**lookup_kwargs)
         return content_objects
     
-    def associate(self, instance, commit=True):
-        group_gfk = self._group_gfk_field(instance)
+    def associate(self, instance, commit=True, gfk_field=None):
+        group_gfk = self._group_gfk_field(instance, field=gfk_field)
         setattr(instance, group_gfk.fk_field, self.id)
         setattr(instance, group_gfk.ct_field, ContentType.objects.get_for_model(self))
         if commit:
