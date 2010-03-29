@@ -88,7 +88,17 @@ class GroupBase(models.Model):
                         break
                 else:
                     opts = f.opts
-        field = [f for f in opts.virtual_fields if f.name == field_name][0]
+        try:
+            field = [f for f in opts.virtual_fields if f.name == field_name][0]
+        except IndexError:
+            from django.db.models.loading import cache as app_cache
+            model = app_cache.get_model(opts.app_label, opts.module_name)
+            raise LookupError("Unable to find generic foreign key named '%s' "
+                "on %r\nThe model may have a different name or it does not "
+                "exist." % (
+                    field_name,
+                    model,
+                ))
         return field
     
     def lookup_params(self, model):
