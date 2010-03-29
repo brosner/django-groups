@@ -6,7 +6,7 @@ from groups.internals import GroupDummy, GroupRequestHelper
 
 
 
-class GroupMiddleware(object):
+class GroupAwareMiddleware(object):
     
     def process_view(self, request, view, view_args, view_kwargs):
         
