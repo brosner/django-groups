@@ -137,7 +137,7 @@ class GroupBase(models.Model):
     
     def get_url_kwargs(self):
         kwargs = {}
-        if self.group:
+        if hasattr(self, "group") and self.group:
             kwargs.update(self.group.get_url_kwargs())
         slug = getattr(self, self.slug_attr)
         kwargs.update({"%s_slug" % self._meta.object_name.lower(): slug})
